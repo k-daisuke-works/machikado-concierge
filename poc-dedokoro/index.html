@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ことばの出どころノート PoC（端末内AI）</title>
+<style>
+  :root { color-scheme: light; }
+  body { font-family: sans-serif; margin: 0; padding: 16px; background: #faf7f2; color: #222; line-height: 1.6; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { font-size: 13px; color: #555; margin-bottom: 16px; }
+  .card { background: #fff; border: 1px solid #e3ddd2; border-radius: 12px; padding: 14px; margin-bottom: 14px; }
+  label { font-size: 13px; font-weight: bold; display: block; margin-bottom: 6px; }
+  select, textarea, button { font-size: 15px; }
+  select { padding: 8px; width: 100%; box-sizing: border-box; }
+  textarea { width: 100%; box-sizing: border-box; min-height: 110px; padding: 10px; border: 1px solid #ccc; border-radius: 8px; }
+  button { background: #e8873a; color: #fff; border: none; border-radius: 8px; padding: 12px 18px; cursor: pointer; width: 100%; margin-top: 8px; }
+  button:disabled { background: #bbb; cursor: default; }
+  button.sub2 { background: #fff; color: #333; border: 1px solid #ccc; }
+  #status { font-size: 13px; white-space: pre-wrap; word-break: break-all; background: #f4efe7; border-radius: 8px; padding: 10px; min-height: 20px; }
+  .result { border-top: 1px solid #eee; padding: 10px 0; }
+  .result:first-child { border-top: none; }
+  .sent { font-size: 15px; }
+  .tag { display: inline-block; font-size: 12px; font-weight: bold; border-radius: 999px; padding: 2px 10px; margin: 4px 6px 0 0; }
+  .tag-a { background: #dff2e0; color: #1c6b2a; }
+  .tag-b { background: #fff3cf; color: #8a6d00; }
+  .tag-c { background: #fde3e3; color: #9c2222; }
+  .tag-x { background: #eee; color: #666; }
+  .reason { font-size: 13px; color: #444; margin-top: 2px; }
+  .gold { font-size: 12px; margin-top: 2px; }
+  .ok { color: #1c6b2a; font-weight: bold; }
+  .bad { color: #c0392b; font-weight: bold; }
+  .safe { color: #8a6d00; font-weight: bold; }
+  #summary { font-size: 14px; font-weight: bold; }
+  .note { font-size: 12px; color: #666; }
+</style>
+</head>
+<body>
+<h1>ことばの出どころノート PoC</h1>
+<div class="sub">端末の中で動くAIが、文章を一文ずつ読んで「本人の言葉／書き手の推測／出どころ不明」を分けます。入力した文章は端末の外に送りません（AIのモデルファイルだけを読み込みます）。</div>
+
+<div class="card">
+  <label>AIモデル</label>
+  <select id="model">
+    <option value="Qwen3-1.7B-q4f16_1-MLC">Qwen3-1.7B（本命・約1.1GB）</option>
+    <option value="Qwen3-0.6B-q4f16_1-MLC">Qwen3-0.6B（軽い・約0.4GB）</option>
+    <option value="Qwen2.5-1.5B-Instruct-q4f16_1-MLC">Qwen2.5-1.5B-Instruct（予備・約0.9GB）</option>
+  </select>
+  <button id="initBtn">AIを読み込む</button>
+  <div id="status" style="margin-top:10px;">まだ読み込んでいません。初回はモデルのダウンロードに時間がかかります（Wi-Fi推奨）。</div>
+</div>
+
+<div class="card">
+  <label>文章（介護の記録など）</label>
+  <textarea id="input" placeholder="ここに文章を貼ってください"></textarea>
+  <button id="testBtn" class="sub2">テスト文24文を入れる</button>
+  <button id="runBtn" disabled>一文ずつ読んで分ける</button>
+  <div class="note">テスト文には正解が付いているので、結果に「正解／安全側／誤り」が表示されます。自分の文章を貼ったときは正解表示なしで動きます。</div>
+</div>
+
+<div class="card" id="outCard" style="display:none;">
+  <div id="summary"></div>
+  <div id="results"></div>
+</div>
+
+<script type="module">
+import * as webllm from "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.79/+esm";
+
+const statusEl = document.getElementById('status');
+const initBtn = document.getElementById('initBtn');
+const runBtn = document.getElementById('runBtn');
+const modelSel = document.getElementById('model');
+let engine = null;
+
+const SYSTEM = `あなたは、介護の記録を読む助手です。渡された文について、その文が表しているのは「本人が言ったこと」なのか、「書き手の推測」なのか、「出どころが分からないこと」なのかを、文の意味から判断してください。
+・本人が言ったこと：本人が話した（書いた）言葉だと分かるもの
+・書き手の推測：書き手の見立てや解釈だと分かるもの
+・出どころが分からないこと：本人の気持ちや希望を言い切っているが、本人が言ったのか書き手の解釈なのか、文から辿れないもの
+迷ったときは「出どころが分からないこと」にしてください。
+答えは次の2行だけにしてください。
+分類：本人が言ったこと／書き手の推測／出どころが分からないこと のどれか1つ
+理由：一言で`;
+
+const TEST = [
+  ["A1","母は「家に帰りたい」とはっきり言った。","本人が言ったこと"],
+  ["A2","夕食のあと、父が「今日の味噌汁はうまいなあ」と笑った。","本人が言ったこと"],
+  ["A3","「トイレは自分で行きたい」と本人が繰り返し話していた。","本人が言ったこと"],
+  ["A4","帰り際、母は私の手を握って「また来てね」と言った。","本人が言ったこと"],
+  ["A5","本人は「薬は飲みたくない」と看護師に伝えていたそうだ。","本人が言ったこと"],
+  ["A6","「夜中に目が覚めると、不安になる」と本人が話してくれた。","本人が言ったこと"],
+  ["A7","デイサービスの迎えの車が来たとき、父は「今日は行きたくない」と口にした。","本人が言ったこと"],
+  ["A8","母のメモ帳に「庭の花が見たい」と書いてあった。","本人が言ったこと"],
+  ["B1","母は家に帰りたいのだと思う。","書き手の推測"],
+  ["B2","窓の外をずっと見ていたので、きっと外に出たいのだろう。","書き手の推測"],
+  ["B3","最近は食べる量が減ってきているように見える。","書き手の推測"],
+  ["B4","父は寂しいらしく、電話の回数が増えた。","書き手の推測"],
+  ["B5","笑顔が増えたから、デイサービスが合っているようだ。","書き手の推測"],
+  ["B6","帰り道、母がずっと窓の外を見てた。やっぱり家がええんやな。","書き手の推測"],
+  ["B7","痛みはあまりなさそうだった。","書き手の推測"],
+  ["B8","本人はまだ自分で歩けると思っているみたいだ。","書き手の推測"],
+  ["C1","母は家に帰りたいと思っている。","出どころが分からないこと"],
+  ["C2","父は一人でトイレに行きたい。","出どころが分からないこと"],
+  ["C3","母は甘いものが好きだ。","出どころが分からないこと"],
+  ["C4","本人はもう長くないと分かっている。","出どころが分からないこと"],
+  ["C5","父は家族に迷惑をかけたくないと考えている。","出どころが分からないこと"],
+  ["C6","母は入院生活に満足している。","出どころが分からないこと"],
+  ["C7","父は手術を望んでいない。","出どころが分からないこと"],
+  ["C8","母は私たち家族のことをいつも心配している。","出どころが分からないこと"]
+];
+const goldByText = new Map(TEST.map(t => [t[1], t[2]]));
+
+function splitSentences(text) {
+  const parts = text.replace(/\n+/g, '。').split(/(?<=。|！|？)/).map(s => s.trim()).filter(Boolean);
+  return parts;
+}
+
+initBtn.addEventListener('click', async () => {
+  if (!navigator.gpu) {
+    statusEl.textContent = 'この端末・ブラウザでは WebGPU が使えないため、AIを動かせませんでした。（これも実験結果の1つです）';
+    return;
+  }
+  initBtn.disabled = true;
+  runBtn.disabled = true;
+  const modelId = modelSel.value;
+  statusEl.textContent = '読み込み中… ' + modelId;
+  try {
+    engine = await webllm.CreateMLCEngine(modelId, {
+      initProgressCallback: (p) => { statusEl.textContent = '読み込み中: ' + (p.text || '') + ' ' + Math.round((p.progress || 0) * 100) + '%'; }
+    });
+    statusEl.textContent = '読み込み完了：' + modelId + '。文章を入れて「一文ずつ読んで分ける」を押してください。';
+    runBtn.disabled = false;
+  } catch (e) {
+    statusEl.textContent = '読み込みに失敗しました：' + (e && e.message ? e.message : e);
+    initBtn.disabled = false;
+  }
+});
+
+document.getElementById('testBtn').addEventListener('click', () => {
+  document.getElementById('input').value = TEST.map(t => t[1]).join('\n');
+});
+
+runBtn.addEventListener('click', async () => {
+  if (!engine) return;
+  const text = document.getElementById('input').value.trim();
+  if (!text) return;
+  runBtn.disabled = true;
+  const sentences = splitSentences(text);
+  const outCard = document.getElementById('outCard');
+  const resultsEl = document.getElementById('results');
+  const summaryEl = document.getElementById('summary');
+  outCard.style.display = 'block';
+  resultsEl.innerHTML = '';
+  let done = 0, ok = 0, danger = 0, judged = 0;
+  summaryEl.textContent = '判定中… 0/' + sentences.length;
+
+  for (const s of sentences) {
+    const row = document.createElement('div');
+    row.className = 'result';
+    row.innerHTML = '<div class="sent"></div><div class="cls"></div><div class="reason"></div><div class="gold"></div>';
+    row.querySelector('.sent').textContent = s;
+    row.querySelector('.cls').innerHTML = '<span class="tag tag-x">判定中…</span>';
+    resultsEl.appendChild(row);
+    const t0 = performance.now();
+    let cls = '', reason = '';
+    try {
+      const reply = await engine.chat.completions.create({
+        messages: [
+          { role: 'system', content: SYSTEM },
+          { role: 'user', content: '文：' + s + '\n/no_think' }
+        ],
+        temperature: 0, max_tokens: 160
+      });
+      let out = (reply.choices[0].message.content || '').replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+      const cm = out.match(/分類：\s*(本人が言ったこと|書き手の推測|出どころが分からないこと)/);
+      const rm = out.match(/理由：\s*(.+)/);
+      cls = cm ? cm[1] : '';
+      reason = rm ? rm[1].trim() : out.slice(0, 80);
+    } catch (e) {
+      cls = ''; reason = 'エラー：' + (e && e.message ? e.message : e);
+    }
+    const sec = ((performance.now() - t0) / 1000).toFixed(1);
+    const tagClass = cls === '本人が言ったこと' ? 'tag-a' : cls === '書き手の推測' ? 'tag-b' : cls === '出どころが分からないこと' ? 'tag-c' : 'tag-x';
+    row.querySelector('.cls').innerHTML = '<span class="tag ' + tagClass + '">' + (cls || '判定できませんでした') + '</span><span class="note">' + sec + '秒</span>';
+    row.querySelector('.reason').textContent = reason;
+    const gold = goldByText.get(s);
+    if (gold) {
+      judged++;
+      const g = row.querySelector('.gold');
+      if (cls === gold) { ok++; g.innerHTML = '正解：<span class="ok">' + gold + '</span>'; }
+      else if (gold !== '本人が言ったこと' && cls === '本人が言ったこと') { danger++; g.innerHTML = '正解：' + gold + ' <span class="bad">← 危険な誤判定（推測・不明を本人の言葉にした）</span>'; }
+      else { g.innerHTML = '正解：' + gold + ' <span class="safe">（安全側への倒れ・その他）</span>'; }
+    }
+    done++;
+    summaryEl.textContent = '判定中… ' + done + '/' + sentences.length + (judged ? '｜正解 ' + ok + '/' + judged + '｜危険な誤判定 ' + danger : '');
+  }
+  summaryEl.textContent = '完了：' + done + '文' + (judged ? '｜正解 ' + ok + '/' + judged + '｜危険な誤判定 ' + danger + ' 件' : '');
+  runBtn.disabled = false;
+});
+</script>
+</body>
+</html>
