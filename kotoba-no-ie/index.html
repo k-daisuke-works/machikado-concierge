@@ -7,11 +7,13 @@
 <style>
   * { box-sizing: border-box; }
   body { margin:0; font-family: "Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif; background:#fdf8f0; color:#3a2f28; }
-  header { background:#fff; border-bottom:2px solid #f0e2cc; padding:10px 14px; display:flex; align-items:center; gap:10px; position:sticky; top:0; z-index:5; }
+  .topbar { position:sticky; top:0; z-index:5; }
+  header { background:#fff; border-bottom:2px solid #f0e2cc; padding:10px 14px; display:flex; align-items:center; gap:10px; }
   header h1 { font-size:19px; margin:0; }
   header .sub { font-size:11px; color:#9a7b5f; }
-  nav { display:flex; gap:6px; padding:8px 10px; background:#fff7ea; position:sticky; top:49px; z-index:5; border-bottom:1px solid #f0e2cc; }
-  nav button { flex:1; padding:10px 2px; font-size:13px; border-radius:999px; border:1.5px solid #d9c7a7; background:#fff; color:#6b5136; }
+  nav { display:flex; gap:6px; padding:8px 10px; background:#fff7ea; border-bottom:1px solid #f0e2cc; }
+  nav button { flex:1; padding:10px 2px; font-size:13px; border-radius:999px; border:1.5px solid #d9c7a7; background:#fff; color:#6b5136; white-space:nowrap; }
+  @media (max-width:420px){ nav button { font-size:12px; padding:9px 1px; } }
   nav button.on { background:#e8873a; border-color:#e8873a; color:#fff; font-weight:bold; }
   main { max-width:640px; margin:0 auto; padding:14px 12px 60px; }
   section { display:none; }
@@ -44,6 +46,7 @@
 </style>
 </head>
 <body>
+<div class="topbar">
 <header>
   <div>
     <h1>🏠 ことばの家</h1>
@@ -57,6 +60,7 @@
   <button data-tab="tree">言葉の木</button>
   <button data-tab="settings">設定</button>
 </nav>
+</div>
 <main>
   <section id="tab-home" class="on">
     <div class="card" style="text-align:center">
