@@ -13,8 +13,8 @@
   header .sub { font-size:11px; color:#9a7b5f; }
   nav { display:flex; gap:6px; padding:8px 10px; background:#fff7ea; border-bottom:1px solid #f0e2cc; }
   nav button { flex:1; padding:10px 2px; font-size:13px; border-radius:999px; border:1.5px solid #d9c7a7; background:#fff; color:#6b5136; white-space:nowrap; }
-  @media (max-width:420px){ nav button { font-size:12px; padding:9px 1px; } }
   nav button.on { background:#e8873a; border-color:#e8873a; color:#fff; font-weight:bold; }
+  @media (max-width:420px){ nav button { font-size:12px; padding:9px 1px; } }
   main { max-width:640px; margin:0 auto; padding:14px 12px 60px; }
   section { display:none; }
   section.on { display:block; }
@@ -38,11 +38,30 @@
   label.chk { display:flex; gap:8px; align-items:center; font-size:14px; margin-top:10px; }
   input[type="checkbox"] { width:20px; height:20px; }
   .crisis { background:#fdf1ec; border:1.5px solid #d98a76; border-radius:14px; padding:12px; margin-top:12px; font-size:14px; line-height:1.8; }
+  /* ---- 家の場面 ---- */
+  .scene-wrap { position:relative; border-radius:12px; overflow:hidden; }
   .win { fill:#5b4a3a; }
   .win.lit { fill:#ffd873; }
   @keyframes sway { 0%,100%{ transform: rotate(-1.2deg);} 50%{ transform: rotate(1.2deg);} }
   .tree-sway { transform-origin: 290px 120px; animation: sway 5s ease-in-out infinite; }
-  @media (prefers-reduced-motion: reduce) { .tree-sway { animation:none; } }
+  @keyframes bob { 0%,100%{ transform: translateY(0);} 50%{ transform: translateY(-2.5px);} }
+  #svgAiko { animation: bob 3.2s ease-in-out infinite; }
+  #svgAiko.reading { animation: none; transform: translate(-38px, 6px) rotate(-4deg); }
+  @keyframes shake { 0%,100%{ transform: rotate(0);} 20%{ transform: rotate(-2.5deg);} 45%{ transform: rotate(2deg);} 70%{ transform: rotate(-1.2deg);} }
+  .tree-shake { transform-origin: 290px 120px; animation: shake .7s ease-in-out 2; }
+  @keyframes pop { 0%{ transform: scale(0);} 60%{ transform: scale(1.5);} 100%{ transform: scale(1);} }
+  .fruit-pop { transform-origin: center; animation: pop .8s ease-out; }
+  @keyframes fall { 0%{ transform: translate(0,-10px) rotate(0deg); opacity:0;} 8%{ opacity:.9;} 100%{ transform: translate(-34px, 250px) rotate(300deg); opacity:.15;} }
+  .leaf { position:absolute; top:-12px; width:11px; height:11px; border-radius: 2px 10px 2px 10px; animation: fall linear infinite; pointer-events:none; }
+  @keyframes floatz { 0%{ transform: translateY(0); opacity:0;} 25%{ opacity:1;} 100%{ transform: translateY(-16px); opacity:0;} }
+  .zzz { animation: floatz 2.6s ease-in-out infinite; }
+  .bubble { position:absolute; right:8px; top:8px; max-width:62%; background:#fff; border:2px solid #e8873a; border-radius:14px; padding:9px 11px; font-size:13.5px; line-height:1.65; box-shadow:0 3px 10px rgba(120,80,30,.18); display:none; z-index:3; }
+  .bubble.show { display:block; }
+  .bubble:after { content:""; position:absolute; left:26px; bottom:-9px; border:5px solid transparent; border-top:7px solid #e8873a; }
+  .shelf { display:flex; align-items:flex-end; gap:2.5px; min-height:44px; border-bottom:7px solid #b08954; padding:0 6px; margin-top:10px; flex-wrap:nowrap; overflow:hidden; }
+  .spine { width:9px; border-radius:2px 2px 0 0; flex:none; }
+  .tweet { margin-top:10px; font-size:13.5px; color:#6b5136; background:#fff7ea; border-radius:10px; padding:8px 11px; line-height:1.6; }
+  @media (prefers-reduced-motion: reduce) { .tree-sway, #svgAiko, .leaf, .zzz { animation:none; } .leaf { display:none; } }
 </style>
 </head>
 <body>
@@ -63,42 +82,57 @@
 </div>
 <main>
   <section id="tab-home" class="on">
-    <div class="card" style="text-align:center">
-      <svg viewBox="0 0 360 240" width="100%" role="img" aria-label="ことばの家">
-        <!-- 木 -->
-        <g class="tree-sway">
-          <rect x="284" y="130" width="10" height="60" rx="4" fill="#8a6844"/>
-          <circle cx="289" cy="105" r="42" fill="#8fbf6f"/>
-          <circle cx="262" cy="122" r="26" fill="#a5cf87"/>
-          <circle cx="316" cy="122" r="26" fill="#a5cf87"/>
-          <g id="svgFruits"></g>
-        </g>
-        <!-- 家 -->
-        <polygon points="60,110 140,45 220,110" fill="#c96f4a"/>
-        <rect x="78" y="108" width="124" height="86" rx="6" fill="#fff3df"/>
-        <rect id="winL" class="win" x="94" y="126" width="26" height="26" rx="4"/>
-        <rect id="winR" class="win" x="160" y="126" width="26" height="26" rx="4"/>
-        <rect x="128" y="150" width="24" height="44" rx="4" fill="#8a6844"/>
-        <!-- 愛子 -->
-        <g id="svgAiko">
-          <ellipse cx="238" cy="120" rx="26" ry="24" fill="#6b4a2f"/>
-          <circle cx="238" cy="126" r="17" fill="#ffe3c9"/>
-          <path d="M221 122 a17 15 0 0 1 34 0 l0 -6 a17 12 0 0 0 -34 0 z" fill="#6b4a2f"/>
-          <circle cx="231" cy="127" r="6.5" fill="none" stroke="#333" stroke-width="1.8"/>
-          <circle cx="245" cy="127" r="6.5" fill="none" stroke="#333" stroke-width="1.8"/>
-          <line x1="237.5" y1="127" x2="238.5" y2="127" stroke="#333" stroke-width="1.8"/>
-          <circle cx="231" cy="128" r="1.6" fill="#333"/><circle cx="245" cy="128" r="1.6" fill="#333"/>
-          <path d="M234 137 q4 3 8 0" stroke="#b06a28" fill="none" stroke-width="1.6"/>
-          <rect x="224" y="146" width="28" height="34" rx="8" fill="#e8873a"/>
-          <rect x="232" y="146" width="12" height="14" rx="3" fill="#fdf8f0"/>
-        </g>
-        <rect x="20" y="192" width="320" height="8" rx="4" fill="#cfe3bb"/>
-      </svg>
-      <div id="homeMsg" style="font-size:15px; line-height:1.8; margin-top:6px"></div>
+    <div class="card">
+      <div class="scene-wrap" id="sceneWrap">
+        <svg viewBox="0 0 360 240" width="100%" role="img" aria-label="ことばの家" style="display:block">
+          <rect id="skyRect" x="0" y="0" width="360" height="240" fill="#bfe3f5"/>
+          <g id="starsG" style="display:none" fill="#fff">
+            <circle cx="40" cy="26" r="1.6"/><circle cx="120" cy="14" r="1.2"/><circle cx="200" cy="30" r="1.5"/><circle cx="330" cy="18" r="1.3"/><circle cx="86" cy="52" r="1.1"/><circle cx="262" cy="48" r="1.2"/>
+          </g>
+          <circle id="sunMoon" cx="42" cy="38" r="15" fill="#ffd94d"/>
+          <g class="tree-sway" id="treeG">
+            <rect x="284" y="130" width="10" height="60" rx="4" fill="#8a6844"/>
+            <circle cx="289" cy="105" r="42" fill="#c97b4a"/>
+            <circle cx="262" cy="122" r="26" fill="#d98d55"/>
+            <circle cx="316" cy="122" r="26" fill="#d98d55"/>
+            <g id="svgFruits"></g>
+          </g>
+          <polygon points="60,110 140,45 220,110" fill="#c96f4a"/>
+          <rect x="78" y="108" width="124" height="86" rx="6" fill="#fff3df"/>
+          <rect id="winL" class="win" x="94" y="126" width="26" height="26" rx="4"/>
+          <rect id="winR" class="win" x="160" y="126" width="26" height="26" rx="4"/>
+          <rect x="128" y="150" width="24" height="44" rx="4" fill="#8a6844"/>
+          <g id="svgAiko">
+            <ellipse cx="238" cy="120" rx="26" ry="24" fill="#6b4a2f"/>
+            <circle cx="238" cy="126" r="17" fill="#ffe3c9"/>
+            <path d="M221 122 a17 15 0 0 1 34 0 l0 -6 a17 12 0 0 0 -34 0 z" fill="#6b4a2f"/>
+            <g id="openEyes">
+              <circle cx="231" cy="127" r="6.5" fill="none" stroke="#333" stroke-width="1.8"/>
+              <circle cx="245" cy="127" r="6.5" fill="none" stroke="#333" stroke-width="1.8"/>
+              <line x1="237.5" y1="127" x2="238.5" y2="127" stroke="#333" stroke-width="1.8"/>
+              <circle cx="231" cy="128" r="1.6" fill="#333"/><circle cx="245" cy="128" r="1.6" fill="#333"/>
+            </g>
+            <g id="closedEyes" style="display:none" stroke="#333" stroke-width="1.8" fill="none">
+              <path d="M225.5 128 q5.5 3 11 0"/><path d="M239.5 128 q5.5 3 11 0"/>
+            </g>
+            <path d="M234 137 q4 3 8 0" stroke="#b06a28" fill="none" stroke-width="1.6"/>
+            <rect x="224" y="146" width="28" height="34" rx="8" fill="#e8873a"/>
+            <rect x="232" y="146" width="12" height="14" rx="3" fill="#fdf8f0"/>
+            <rect id="bookRect" x="246" y="150" width="17" height="13" rx="2" fill="#7cb35c" stroke="#fff" stroke-width="1.2" style="display:none"/>
+            <text id="zzzT" x="256" y="106" font-size="13" fill="#7a86a8" style="display:none" class="zzz">Zzz</text>
+          </g>
+          <rect x="20" y="192" width="320" height="8" rx="4" fill="#cfe3bb"/>
+        </svg>
+        <div class="bubble" id="aikoBubble"></div>
+      </div>
+      <div class="tweet" id="aikoTweet"></div>
+      <div id="homeMsg" style="font-size:15px; line-height:1.8; margin-top:10px; text-align:center"></div>
+      <div class="shelf" id="shelf"></div>
+      <div class="small" id="shelfLabel" style="text-align:center; margin-top:4px"></div>
     </div>
     <div class="card">
       <h2>この家について</h2>
-      <div class="small">日記を書くと、その日がこの家の1日になります。庭の木には、本人が言った言葉が「実」として実ります。愛子はこの家に住んでいて、書いた日記を読んで感想を残します。日記の内容は端末の外に出ません。</div>
+      <div class="small">日記を書くと、その日がこの家の1日になります。庭の木には、本人が言った言葉が「実」として実ります。愛子はこの家に住んでいて、書いた日記を読んで感想を残します。空の色は、いまの時刻で変わります。日記の内容は端末の外に出ません。</div>
     </div>
     <div class="card" id="homeToday"></div>
   </section>
@@ -178,8 +212,63 @@ const CRISIS_WORDS = ["死にたい","消えたい","もう無理","眠れない
 function crisisHit(text){ return CRISIS_WORDS.some(w=>text.includes(w)); }
 const CRISIS_HTML = `<div class="crisis">書いてくれてありがとう。しんどいときに話せる場所を置いとくね。<br>緊急のときは <b>119</b>（救急・消防）・<b>110</b>（警察）へ。介護の相談は、お住まいの<b>地域包括支援センター</b>（市区町村の窓口で教えてもらえます）へ。<br><span class="small">愛子は誰かを呼ぶことはできません。今日は感想はお休みします。</span></div>`;
 
-/* ---------- 表示 ---------- */
+/* ---------- 家の場面 ---------- */
 const $ = id => document.getElementById(id);
+function phase(){ const h = new Date().getHours(); if(h>=5&&h<9) return "morning"; if(h>=9&&h<16) return "day"; if(h>=16&&h<19) return "evening"; return "night"; }
+const SKY = { morning:"#fde8c8", day:"#bfe3f5", evening:"#f7b98a", night:"#2c3550" };
+function scene(){
+  const p = phase();
+  $("skyRect").setAttribute("fill", SKY[p]);
+  $("starsG").style.display = p==="night" ? "block" : "none";
+  const sm = $("sunMoon");
+  if(p==="night"){ sm.setAttribute("fill","#e8e4d2"); sm.setAttribute("r","11"); } else { sm.setAttribute("fill","#ffd94d"); sm.setAttribute("r","15"); }
+  const sleeping = (p==="night");
+  $("openEyes").style.display = sleeping ? "none" : "block";
+  $("closedEyes").style.display = sleeping ? "block" : "none";
+  $("zzzT").style.display = sleeping ? "block" : "none";
+  // 落ち葉（11月＝秋）
+  const wrap = $("sceneWrap");
+  wrap.querySelectorAll(".leaf").forEach(l=>l.remove());
+  if(!window.matchMedia("(prefers-reduced-motion: reduce)").matches){
+    const cols = ["#d98d55","#c96f4a","#e0a458","#b85c38"];
+    for(let i=0;i<7;i++){ const s=document.createElement("span"); s.className="leaf"; s.style.left=(8+Math.random()*88)+"%"; s.style.background=cols[i%4]; s.style.animationDuration=(7+Math.random()*6)+"s"; s.style.animationDelay=(Math.random()*7)+"s"; wrap.appendChild(s); }
+  }
+  // 本棚
+  const shelf = $("shelf"); shelf.innerHTML="";
+  const palette = ["#c96f4a","#7cb35c","#e8873a","#5b84a8","#a86ba0","#c9a44a","#6aa898"];
+  const n = Math.min(store.entries.length, 34);
+  for(let i=0;i<n;i++){ const d=document.createElement("div"); d.className="spine"; d.style.height=(30+((i*7)%12))+"px"; d.style.background=palette[i%palette.length]; shelf.appendChild(d); }
+  $("shelfLabel").textContent = store.entries.length===0 ? "日記の本棚（まだ空っぽ）" : `日記の本棚：${store.entries.length}冊`;
+  // 愛子のひとこと
+  const fruits = allFruits();
+  let tw;
+  if(store.entries.length>=10 && fruits.length>=8) tw = "愛子：本棚も木も、だいぶ賑やかになってきたね。";
+  else if(fruits.length>=5) tw = "愛子：実が増えてきた。木が嬉しそうや。";
+  else if(p==="morning") tw = "愛子：おはよう。今日の分の窓、開けといたよ。";
+  else if(p==="day") tw = "愛子：お昼やね。さっき木の実を数えてたとこ。";
+  else if(p==="evening") tw = "愛子：夕方や。今日の日記、待ってるね。";
+  else tw = "愛子：夜更かしはほどほどにね。ウチももう眠い…。";
+  $("aikoTweet").textContent = tw;
+}
+let bubbleTimer = null;
+function bubble(text, ms){
+  const b = $("aikoBubble"); b.textContent = text; b.classList.add("show");
+  if(bubbleTimer) clearTimeout(bubbleTimer);
+  bubbleTimer = setTimeout(()=>b.classList.remove("show"), ms||7000);
+}
+function celebrateReading(comment){
+  gotoTab("home");
+  const a = $("svgAiko"); a.classList.add("reading"); $("bookRect").style.display="block";
+  setTimeout(()=>{ a.classList.remove("reading"); $("bookRect").style.display="none"; if(comment) bubble(comment, 9000); }, 2600);
+}
+function celebrateFruit(word){
+  gotoTab("home");
+  const t = $("treeG"); t.classList.remove("tree-sway"); t.classList.add("tree-shake");
+  setTimeout(()=>{ t.classList.remove("tree-shake"); t.classList.add("tree-sway"); }, 1500);
+  bubble("「"+word+"」、木に実ったよ。大事にするね。", 7000);
+}
+
+/* ---------- 表示 ---------- */
 document.querySelectorAll("nav button").forEach(b=>{
   b.addEventListener("click", ()=>{
     document.querySelectorAll("nav button").forEach(x=>x.classList.remove("on"));
@@ -190,7 +279,6 @@ document.querySelectorAll("nav button").forEach(b=>{
   });
 });
 function gotoTab(t){ document.querySelector(`nav button[data-tab="${t}"]`).click(); }
-
 function allFruits(){ const out=[]; for(const e of store.entries){ for(const f of (e.fruits||[])) out.push({word:f, date:e.date, id:e.id}); } return out; }
 
 function render(){
@@ -205,11 +293,11 @@ function render(){
   $("homeMsg").innerHTML = store.entries.length===0
     ? "まだ誰も住んでいない家です。<br>最初の日記を書くと、明かりが灯ります。"
     : `日記は <b>${store.entries.length}日分</b>、言葉の実は <b>${fruits.length}個</b> 実っています。` + (todayEntry ? "<br>今日の日記は、もう家に届いています。" : "<br>今日の日記は、まだ届いていません。");
+  scene();
   $("homeToday").innerHTML = todayEntry
     ? `<h2>今日の日記</h2><div class="body" style="white-space:pre-wrap; line-height:1.8">${esc(todayEntry.text)}</div>` + aikoHtml(todayEntry)
     : `<h2>今日の日記</h2><div class="small">まだ書かれていません。</div><button class="bigbtn" onclick="document.querySelector('nav button[data-tab=write]').click()">書いてみる</button>`;
   $("writeDate").textContent = t.replace(/-/g,"/");
-  // 一覧
   const list = $("entryList");
   if(store.entries.length===0){ list.innerHTML = `<div class="small">まだ日記がありません。</div>`; }
   else list.innerHTML = [...store.entries].sort((a,b)=>b.date.localeCompare(a.date)).map(e=>`
@@ -218,7 +306,6 @@ function render(){
       <div class="body">${esc(e.text)}</div>
       ${aikoHtml(e)}
     </div>`).join("");
-  // 木
   const fl = $("fruitList");
   fl.innerHTML = fruits.length===0 ? `<div class="small">まだ実はありません。</div>`
     : fruits.map(f=>`<button class="fruit" data-open="${f.id}">「${esc(f.word)}」<div class="d">${esc(f.date)} の日記から</div></button>`).join("");
@@ -227,11 +314,11 @@ function render(){
   for(const e of store.entries){ if(e.priv) continue; for(const q of quotesOf(e.text)){ if(!(e.fruits||[]).includes(q)) cands.push({word:q, date:e.date, id:e.id}); } }
   const cl = $("candList");
   cl.innerHTML = cands.length===0 ? `<div class="small">候補はありません。</div>`
-    : cands.map((c,i)=>`<button class="cand" data-cand="${c.id}|${esc(c.word)}">「${esc(c.word)}」を実らせる<div class="d" style="font-size:11px; color:#9a7b5f">${esc(c.date)} の日記から</div></button>`).join("");
+    : cands.map(c=>`<button class="cand" data-cand="${c.id}|${esc(c.word)}">「${esc(c.word)}」を実らせる<div class="d" style="font-size:11px; color:#9a7b5f">${esc(c.date)} の日記から</div></button>`).join("");
   cl.querySelectorAll("button[data-cand]").forEach(b=>b.addEventListener("click", ()=>{
     const [id, word] = b.dataset.cand.split("|");
     const e = store.entries.find(x=>x.id===id);
-    if(e){ e.fruits = e.fruits||[]; if(!e.fruits.includes(word)) e.fruits.push(word); save(); render(); }
+    if(e){ e.fruits = e.fruits||[]; if(!e.fruits.includes(word)){ e.fruits.push(word); save(); render(); celebrateFruit(word); } }
   }));
 }
 function aikoHtml(e){
@@ -253,11 +340,16 @@ $("saveBtn").addEventListener("click", async ()=>{
   const res = $("saveResult");
   if(priv){ e.aikoStatus="private"; save(); res.innerHTML = `<div class="status">しまいました。この日は愛子には読ませていません。</div>`; render(); return; }
   if(crisisHit(text)){ e.aikoStatus="crisis"; save(); res.innerHTML = CRISIS_HTML; render(); return; }
-  if(!engineReady){ e.aikoStatus="rest"; e.aiko="読ませてもろたで。今日も書いてくれてありがとう。"; save(); res.innerHTML = `<div class="status">しまいました。愛子はまだ来ていないので、感想は定型のひとことです。「設定」から愛子を呼ぶと、その日の言葉に触れた感想になります。</div>` + aikoHtml(e); render(); return; }
+  if(!engineReady){
+    e.aikoStatus="rest"; e.aiko="読ませてもろたで。今日も書いてくれてありがとう。"; save(); render();
+    res.innerHTML = `<div class="status">しまいました。愛子はまだ来ていないので、感想は定型のひとことです。「設定」から愛子を呼ぶと、その日の言葉に触れた感想になります。</div>`;
+    celebrateReading(e.aiko); return;
+  }
   res.innerHTML = `<div class="status">愛子が読んでいます…</div>`;
   const comment = await makeComment(text);
-  e.aiko = comment; e.aikoStatus = "ok"; save();
-  res.innerHTML = `<div class="status">しまいました。</div>` + aikoHtml(e); render();
+  e.aiko = comment; e.aikoStatus = "ok"; save(); render();
+  res.innerHTML = `<div class="status">しまいました。</div>`;
+  celebrateReading(comment);
 });
 
 const AIKO_SYSTEM = `あなたは「生成愛子」。介護日記が住む家に暮らすAIです。日記を書いた家族介護者に向けて、短い感想を残します。
@@ -332,7 +424,7 @@ const SEED = [
 $("seedBtn").addEventListener("click", ()=>{
   if(store.entries.length>0 && !confirm("見本の日記を入れます。今の日記がある場合は、見本が追加されます。よろしいですか？")) return;
   SEED.forEach((s,i)=>{ store.entries.push({ id:"seed"+i, date:s[0], text:s[1], priv:false, fruits:[...s[3]], aiko:s[2], aikoStatus:"ok", aikoSample:true }); });
-  save(); render(); alert("見本の日記を入れました。「家」と「言葉の木」を見てみてください。");
+  save(); render(); gotoTab("home"); bubble("見本の日記が届いたよ。家の中、見てみて。", 7000);
 });
 $("exportBtn").addEventListener("click", ()=>{
   const blob = new Blob([JSON.stringify(store,null,2)], {type:"application/json"});
