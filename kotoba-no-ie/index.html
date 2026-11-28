@@ -215,6 +215,27 @@ const KEY='kurashi-diary-v1';
 const AXES=[['meal','食事',['全部','7割','半分','少し','食べなかった']],['water','水分',['よく飲んだ','ふつう','少なめ']],['toilet','排泄',['あった','なかった']],['sleep','睡眠',['よく眠れた','夜中に起きた','眠れなかった']],['med','薬',['飲めた','飲み忘れ','いやがった']]];
 const EVENT_CHOICES=['通院した','デイサービス','ショートステイ','訪問看護・介護が来た','買い物に行った','家族が来た','電話で話した','外出した'];
 const COST_CATS=['タクシー代','診察代','薬代','日用品','食費','その他'];
+const HOUKATSU_AREAS={
+'新潟市西区':{
+centers:{
+'小新・小針':{name:'地域包括支援センター小新・小針',tel:'025-201-1351',districts:['小新','小針']},
+'坂井輪':{name:'地域包括支援センター坂井輪',tel:'025-269-1611',districts:['坂井輪']},
+'五十嵐':{name:'地域包括支援センター五十嵐',tel:'025-378-2255',districts:['五十嵐']},
+'黒埼':{name:'地域包括支援センター黒埼',tel:'025-377-1522',districts:['黒埼']},
+'赤塚':{name:'地域包括支援センター赤塚',tel:'025-264-3377',districts:['内野','赤塚','中野小屋']}
+},
+towns:{'小針':'小針','小針西':'小針','西小針台':'小針','青山':'小針','小新':'小新','小新西':'小新','五十嵐':'五十嵐','上新栄町':'五十嵐','真砂':'五十嵐','内野':'内野','西内野':'内野','赤塚':'赤塚','中野小屋':'中野小屋','小瀬':'中野小屋','笠木':'中野小屋','大野町':'黒埼','山田':'黒埼','鳥原':'黒埼','新通':'坂井輪','坂井東':'坂井輪','寺尾上':'坂井輪','寺尾台':'坂井輪'},
+splitTowns:['寺尾']
+}};
+function resolveHoukatsu(pr){
+const A=HOUKATSU_AREAS[pr.city];if(!A)return;
+let d=A.towns[pr.town]||'';
+if(A.splitTowns.includes(pr.town))d=pr.district||'';
+if(d)pr.district=d;
+pr.houkatsu='';pr.houkatsuTel='';
+if(!d)return;
+Object.values(A.centers).forEach(c=>{if(c.districts.includes(d)){pr.houkatsu=c.name;pr.houkatsuTel=c.tel;}});
+}
 const SELF_AXES=[['sleep','眠れた',['よく眠れた','まあまあ','眠れなかった']],['tired','疲れ',['元気','少し疲れた','疲れた']]];
 const EXP_TYPES=[['A','1日の記録（食事・水分・排泄・睡眠・薬）'],['B','出来事'],['C','自分の記録'],['D','費用のメモ']];
 const PURPOSES=[
@@ -235,7 +256,7 @@ function seed(){
       {kind:'施設',label:'病院',value:'さくら病院',ph:'［施設01］'},
       {kind:'場所',label:'住所',value:'新潟市西区',ph:'［場所01］'}
     ]},
-    profiles:{p1:{name:'佐藤春子',rel:'母',address:'新潟市西区',hospital:'さくら病院',tel:'',extras:[]}},
+    profiles:{p1:{name:'佐藤春子',rel:'母',city:'新潟市西区',town:'小新',district:'小新',houkatsu:'地域包括支援センター小新・小針',houkatsuTel:'025-201-1351',hospital:'さくら病院',tel:'',extras:[]}},
     records:{p1:{
       '2026-11-25':{axes:{meal:'7割',water:'ふつう',toilet:'あった',sleep:'夜中に起きた',med:'飲めた'},words:[],events:'',free:'夜中に目が覚めて、しばらく一緒に起きていた。',self:{sleep:'まあまあ',tired:'少し疲れた'},cost:{amount:'',memo:''}},
       '2026-11-26':{axes:{meal:'全部',med:'飲めた'},words:[],events:'通院した',free:'医師から「薬は今のままで」と言われた。',self:{},cost:{amount:'4800',memo:'タクシー代と診察代'}},
@@ -249,8 +270,9 @@ function seed(){
 let S;
 try{S=JSON.parse(localStorage.getItem(KEY))||seed();}catch(e){S=seed();}
 if(!S.purposes)S.purposes=[];
-if(!S.profiles){S.profiles={};Object.keys(S.pii||{}).forEach(pid=>{const pr={name:'',rel:'',address:'',hospital:'',tel:'',extras:[]};(S.pii[pid]||[]).forEach(r=>{if(r.kind==='本人'&&!pr.name)pr.name=r.value;else if(r.kind==='施設'&&!pr.hospital)pr.hospital=r.value;else if(r.kind==='場所'&&!pr.address)pr.address=r.value;else if(r.kind==='連絡先'&&!pr.tel)pr.tel=r.value;else pr.extras.push({label:r.label,value:r.value});});S.profiles[pid]=pr;});}
-S.persons.forEach(p=>{if(!S.profiles[p.id])S.profiles[p.id]={name:'',rel:'',address:'',hospital:'',tel:'',extras:[]};});
+if(!S.profiles){S.profiles={};Object.keys(S.pii||{}).forEach(pid=>{const pr={name:'',rel:'',city:'',town:'',district:'',houkatsu:'',houkatsuTel:'',hospital:'',tel:'',extras:[]};(S.pii[pid]||[]).forEach(r=>{if(r.kind==='本人'&&!pr.name)pr.name=r.value;else if(r.kind==='施設'&&!pr.hospital)pr.hospital=r.value;else if(r.kind==='場所'&&!pr.address)pr.address=r.value;else if(r.kind==='連絡先'&&!pr.tel)pr.tel=r.value;else pr.extras.push({label:r.label,value:r.value});});S.profiles[pid]=pr;});}
+S.persons.forEach(p=>{const pr=S.profiles[p.id];if(pr&&pr.address&&!pr.city){pr.town=pr.address;delete pr.address;}});
+S.persons.forEach(p=>{if(!S.profiles[p.id])S.profiles[p.id]={name:'',rel:'',city:'',town:'',district:'',houkatsu:'',houkatsuTel:'',hospital:'',tel:'',extras:[]};});
 let curDate=todayStr();
 let curMonth=curDate.slice(0,7);
 function save(){localStorage.setItem(KEY,JSON.stringify(S));const el=document.getElementById('savedLine');if(el){el.textContent='保存済み';setTimeout(()=>{el.textContent='';},1600);}}
@@ -288,7 +310,7 @@ box.querySelectorAll('[data-who]').forEach(b=>b.addEventListener('click',()=>{S.
 }
 document.getElementById('whoAdd').addEventListener('click',()=>{
 const v=document.getElementById('whoName').value.trim();if(!v)return;
-const id='p'+Date.now();S.persons.push({id,name:v});S.records[id]={};if(!S.profiles)S.profiles={};S.profiles[id]={name:'',rel:'',address:'',hospital:'',tel:'',extras:[]};S.active=id;save();
+const id='p'+Date.now();S.persons.push({id,name:v});S.records[id]={};if(!S.profiles)S.profiles={};S.profiles[id]={name:'',rel:'',city:'',town:'',district:'',houkatsu:'',houkatsuTel:'',hospital:'',tel:'',extras:[]};S.active=id;save();
 document.getElementById('whoName').value='';closeSheets();renderAll();
 });
 
@@ -359,8 +381,11 @@ function crisisCheck(text){
 }
 function renderCrisis(){
   const box=document.getElementById('crisisContacts');
-  if(!S.contacts.length){box.innerHTML='<p class="small">相談先は設定から登録できます。</p>';return;}
-  box.innerHTML=S.contacts.map(c=>'<div class="contactline">'+esc(c.name)+(c.hours?'（'+esc(c.hours)+'）':'')+'<br><a href="tel:'+esc(c.tel)+'">'+esc(c.tel)+'</a></div>').join('');
+  const pr=getProfile(S.active);
+  const list=S.contacts.slice();
+  if(pr.houkatsu)list.unshift({name:pr.houkatsu,tel:pr.houkatsuTel||'',hours:'管轄の地域包括支援センター'});
+  if(!list.length){box.innerHTML='<p class="small">相談先は設定から登録できます。</p>';return;}
+  box.innerHTML=list.map(c=>'<div class="contactline">'+esc(c.name)+(c.hours?'（'+esc(c.hours)+'）':'')+(c.tel?'<br><a href="tel:'+esc(c.tel)+'">'+esc(c.tel)+'</a>':'')+'</div>').join('');
 }
 document.getElementById('crisisBack').addEventListener('click',closeSheets);
 </script>
@@ -414,13 +439,16 @@ document.getElementById('treeSvg').innerHTML=svg;
 
 /* settings */
 function personNum(pid){return S.persons.findIndex(p=>p.id===pid)+1;}
-function blankProfile(){return {name:'',rel:'',address:'',hospital:'',tel:'',extras:[]};}
+function blankProfile(){return {name:'',rel:'',city:'',town:'',district:'',houkatsu:'',houkatsuTel:'',hospital:'',tel:'',extras:[]};}
 function getProfile(pid){if(!S.profiles)S.profiles={};if(!S.profiles[pid])S.profiles[pid]=blankProfile();return S.profiles[pid];}
 function profileRows(pid){
 const pr=getProfile(pid),n=String(personNum(pid)).padStart(2,'0'),rows=[];
 if(pr.name)rows.push({label:'名前',value:pr.name,ph:'［本人'+n+'］'});
 if(pr.rel)rows.push({label:'関係',value:pr.rel,ph:'［関係'+n+'］'});
-if(pr.address)rows.push({label:'住所',value:pr.address,ph:'［場所'+n+'］'});
+const place=[pr.city,pr.town].filter(Boolean).join('');
+if(place)rows.push({label:'住所',value:place,ph:'［場所'+n+'］'});
+if(pr.town&&pr.city)rows.push({label:'町名',value:pr.town,ph:'［場所'+n+'］'});
+if(pr.houkatsu)rows.push({label:'地域包括',value:pr.houkatsu,ph:'［包括'+n+'］'});
 if(pr.hospital)rows.push({label:'病院',value:pr.hospital,ph:'［施設'+n+'］'});
 if(pr.tel)rows.push({label:'電話番号',value:pr.tel,ph:'［連絡先'+n+'］'});
 (pr.extras||[]).forEach((e,i)=>{if(e.value)rows.push({label:e.label,value:e.value,ph:'［その他'+n+'-'+(i+1)+'］'});});
@@ -434,10 +462,33 @@ pl.querySelectorAll('[data-sw]').forEach(b=>b.addEventListener('click',()=>{S.ac
 const pr=getProfile(S.active);
 const actP=S.persons.find(p=>p.id===S.active);
 document.getElementById('profileTitle').textContent='プロフィール（'+(actP?actP.name:'')+'・日記とは別に置きます）';
-const PF=[['name','名前','［本人'],['rel','関係','［関係'],['address','住所','［場所'],['hospital','かかりつけの病院','［施設'],['tel','電話番号','［連絡先']];
+const PF=[['name','名前','［本人'],['rel','関係','［関係'],['hospital','かかりつけの病院','［施設'],['tel','電話番号','［連絡先']];
 const pnum=String(personNum(S.active)).padStart(2,'0');
 document.getElementById('profileBox').innerHTML=PF.map(([k,l,php])=>'<div class="piirow"><span style="flex:0 0 118px">'+l+'</span><input type="text" data-pf="'+k+'" value="'+esc(pr[k]||'')+'"><span class="ph">'+php+pnum+'］</span></div>').join('')
 +(pr.extras||[]).map((e,i)=>'<div class="piirow"><span style="flex:0 0 118px">'+esc(e.label)+'</span><input type="text" data-ex="'+i+'" value="'+esc(e.value)+'"><span class="ph">［その他'+pnum+'-'+(i+1)+'］</span><button class="btn ghost" data-delex="'+i+'">消す</button></div>').join('');
+const areaA=HOUKATSU_AREAS[pr.city];
+let areaH='';
+areaH+='<div class="piirow"><span style="flex:0 0 118px">市区町村</span><select id="pfCity"><option value=""></option>'+Object.keys(HOUKATSU_AREAS).map(c=>'<option value="'+esc(c)+'"'+(pr.city===c?' selected':'')+'>'+esc(c)+'</option>').join('')+(pr.city&&!HOUKATSU_AREAS[pr.city]?'<option value="'+esc(pr.city)+'" selected>'+esc(pr.city)+'</option>':'')+'</select></div>';
+if(areaA){
+const townNames=Object.keys(areaA.towns).concat(areaA.splitTowns);
+const townInList=townNames.includes(pr.town);
+areaH+='<div class="piirow"><span style="flex:0 0 118px">町名</span><select id="pfTown"><option value=""></option>'+townNames.map(t=>'<option value="'+esc(t)+'"'+(pr.town===t?' selected':'')+'>'+esc(t)+'</option>').join('')+'<option value="__other"'+(!townInList&&pr.town?' selected':'')+'>その他</option></select><span class="ph">［場所'+pnum+'］</span></div>';
+if(!townInList)areaH+='<div class="piirow"><span style="flex:0 0 118px"></span><input type="text" id="pfTownText" placeholder="町名" value="'+esc(pr.town||'')+'"></div>';
+if(areaA.splitTowns.includes(pr.town)){
+const districts=[];Object.values(areaA.centers).forEach(c=>c.districts.forEach(d=>{if(!districts.includes(d))districts.push(d);}));
+areaH+='<div class="piirow"><span style="flex:0 0 118px">中学校区</span><select id="pfDistrict"><option value=""></option>'+districts.map(d=>'<option value="'+esc(d)+'"'+(pr.district===d?' selected':'')+'>'+esc(d)+'</option>').join('')+'</select></div>';
+}
+areaH+='<div class="piirow"><span style="flex:0 0 118px">管轄の地域包括</span><span style="flex:1">'+(pr.houkatsu?esc(pr.houkatsu)+'（'+esc(pr.houkatsuTel)+'）':'町名を選ぶと自動で決まります')+'</span>'+(pr.houkatsu?'<span class="ph">［包括'+pnum+'］</span>':'')+'</div>';
+}else if(pr.city||pr.town){
+areaH+='<div class="piirow"><span style="flex:0 0 118px">町名</span><input type="text" id="pfTownText" placeholder="町名まで" value="'+esc(pr.town||'')+'"><span class="ph">［場所'+pnum+'］</span></div>';
+areaH+='<div class="piirow"><span style="flex:0 0 118px">管轄の地域包括</span><input type="text" id="pfHoukatsuText" placeholder="センター名" value="'+esc(pr.houkatsu||'')+'"></div>';
+}
+document.getElementById('profileBox').innerHTML+=areaH;
+const pfC=document.getElementById('pfCity');if(pfC)pfC.addEventListener('change',()=>{pr.city=pfC.value;pr.town='';pr.district='';pr.houkatsu='';pr.houkatsuTel='';save();renderSettings();});
+const pfT=document.getElementById('pfTown');if(pfT)pfT.addEventListener('change',()=>{pr.town=pfT.value==='__other'?'':pfT.value;pr.district='';resolveHoukatsu(pr);save();renderSettings();});
+const pfTT=document.getElementById('pfTownText');if(pfTT)pfTT.addEventListener('input',()=>{pr.town=pfTT.value;resolveHoukatsu(pr);save();});
+const pfD=document.getElementById('pfDistrict');if(pfD)pfD.addEventListener('change',()=>{pr.district=pfD.value;resolveHoukatsu(pr);save();renderSettings();});
+const pfH=document.getElementById('pfHoukatsuText');if(pfH)pfH.addEventListener('input',()=>{pr.houkatsu=pfH.value;save();});
 document.querySelectorAll('[data-pf]').forEach(inp=>inp.addEventListener('input',()=>{pr[inp.dataset.pf]=inp.value;save();}));
 document.querySelectorAll('[data-ex]').forEach(inp=>inp.addEventListener('input',()=>{pr.extras[+inp.dataset.ex].value=inp.value;save();}));
 document.querySelectorAll('[data-delex]').forEach(b=>b.addEventListener('click',()=>{pr.extras.splice(+b.dataset.delex,1);save();renderSettings();}));
@@ -447,7 +498,7 @@ cl.querySelectorAll('[data-delc]').forEach(b=>b.addEventListener('click',()=>{S.
 }
 document.getElementById('addPerson').addEventListener('click',()=>{
 const v=document.getElementById('newPersonName').value.trim();if(!v)return;
-const id='p'+Date.now();S.persons.push({id,name:v});S.records[id]={};if(!S.profiles)S.profiles={};S.profiles[id]={name:'',rel:'',address:'',hospital:'',tel:'',extras:[]};S.active=id;save();renderAll();
+const id='p'+Date.now();S.persons.push({id,name:v});S.records[id]={};if(!S.profiles)S.profiles={};S.profiles[id]={name:'',rel:'',city:'',town:'',district:'',houkatsu:'',houkatsuTel:'',hospital:'',tel:'',extras:[]};S.active=id;save();renderAll();
 });
 document.getElementById('addExtra').addEventListener('click',()=>{
 const label=document.getElementById('exLabel').value.trim(),value=document.getElementById('exValue').value.trim();
