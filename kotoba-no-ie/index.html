@@ -174,8 +174,10 @@ pre.prompt{white-space:pre-wrap; word-break:break-word; background:var(--card); 
   <div id="expPurposes"></div>
   <h3>渡す記録</h3>
   <div id="expTypes"></div>
+  <div id="purposeFree" style="display:none">
   <h3>AIへの依頼</h3>
   <textarea id="expPurpose" placeholder="例：期間中の記録を日付順に整理してください"></textarea>
+  </div>
   <div class="btnrow"><button class="btn" id="expGen">プロンプトを作る</button></div>
   <div id="expOut" style="display:none">
     <p class="small">登録していない名前や場所は、伏せ字にならないことがあります。内容を確認してからコピーしてください。</p>
@@ -495,8 +497,8 @@ const pp=document.getElementById('expPurposes');
 pp.innerHTML=PURPOSES.map((p,i)=>'<label class="checkrow"><input type="radio" name="purpose" data-pi="'+i+'">'+p.label+'</label>').join('')+'<label class="checkrow"><input type="radio" name="purpose" data-pi="-1">自分で書く</label>';
 pp.querySelectorAll('[data-pi]').forEach(r=>r.addEventListener('change',()=>{
 const p=PURPOSES[+r.dataset.pi];
+document.getElementById('purposeFree').style.display=p?'none':'block';
 if(p){
-document.getElementById('expPurpose').value=p.ask;
 document.querySelectorAll('[data-et]').forEach(c=>{c.checked=p.types.includes(c.dataset.et);});
 }
 }));
@@ -506,7 +508,8 @@ openSheet('sheetExport');
 document.getElementById('expGen').addEventListener('click',()=>{
 const from=document.getElementById('expFrom').value,to=document.getElementById('expTo').value;
 const types=[...document.querySelectorAll('[data-et]')].filter(c=>c.checked).map(c=>c.dataset.et);
-const purpose=document.getElementById('expPurpose').value.trim();
+const selP=document.querySelector('input[name=purpose]:checked');
+const purpose=(selP&&+selP.dataset.pi>=0)?PURPOSES[+selP.dataset.pi].ask:document.getElementById('expPurpose').value.trim();
 const pid=S.active, recs=S.records[pid]||{};
 const dates=Object.keys(recs).filter(d=>d>=from&&d<=to&&hasContent(recs[d])).sort();
 let lines=[];
