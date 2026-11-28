@@ -113,9 +113,8 @@ pre.prompt{white-space:pre-wrap; word-break:break-word; background:var(--card); 
   <section class="view" id="view-tree">
     <div class="treebox">
       <svg id="treeSvg" width="260" height="240" viewBox="0 0 260 240" aria-label="言葉の木"></svg>
-      <div class="treecounts">葉 <b id="leafCount">0</b>　実 <b id="fruitCount">0</b></div>
+      <div class="treecounts">葉 <b id="leafCount">0</b></div>
     </div>
-    <div id="fruitList"></div>
   </section>
 
   <section class="view" id="view-settings">
@@ -125,19 +124,10 @@ pre.prompt{white-space:pre-wrap; word-break:break-word; background:var(--card); 
       <div class="piirow"><input type="text" id="newPersonName" placeholder="名前（例：母）"><button class="btn sub" id="addPerson">追加</button></div>
     </div>
     <div class="setsec">
-      <h3>個人情報（日記とは別に置きます）</h3>
-      <div id="piiList"></div>
-      <div class="piirow">
-        <select id="piiKind" style="flex:0 0 96px">
-          <option value="本人">本人</option><option value="施設">施設</option><option value="場所">場所</option><option value="連絡先">連絡先</option><option value="その他">その他</option>
-        </select>
-        <input type="text" id="piiLabel" placeholder="項目（例：名前）">
-      </div>
-      <div class="piirow">
-        <input type="text" id="piiValue" placeholder="内容（例：佐藤春子）">
-        <button class="btn sub" id="addPii">追加</button>
-      </div>
-      <p class="small">AIに渡すとき、ここに登録した内容は伏せ字に置き換えます。対応表はこの端末の中だけにあります。</p>
+      <h3 id="profileTitle">プロフィール（日記とは別に置きます）</h3>
+      <div id="profileBox"></div>
+      <div class="piirow"><input type="text" id="exLabel" placeholder="項目（例：デイサービス）"><input type="text" id="exValue" placeholder="内容（例：ひまわり園）"><button class="btn sub" id="addExtra">追加</button></div>
+      <p class="small">AIに渡すとき、プロフィールに登録した内容は伏せ字に置き換えます。対応表はこの端末の中だけにあります。</p>
     </div>
     <div class="setsec">
       <h3>相談先</h3>
@@ -145,12 +135,6 @@ pre.prompt{white-space:pre-wrap; word-break:break-word; background:var(--card); 
       <div class="crowd"><input type="text" id="cName" placeholder="名前（例：地域包括支援センター）"></div>
       <div class="crowd"><input type="tel" id="cTel" placeholder="電話番号"><input type="text" id="cHours" placeholder="時間（例：平日9時〜17時）"></div>
       <div class="btnrow"><button class="btn sub" id="addContact">追加</button></div>
-    </div>
-    <div class="setsec">
-      <h3>しんどい日の言葉</h3>
-      <p class="small">日記にこの言葉が書かれたら、記録を止めて相談先だけを表示します。1行に1つ。</p>
-      <textarea id="crisisWords" rows="4"></textarea>
-      <div class="btnrow"><button class="btn sub" id="saveCrisis">保存</button></div>
     </div>
     <div class="setsec">
       <h3>データ</h3>
@@ -173,26 +157,23 @@ pre.prompt{white-space:pre-wrap; word-break:break-word; background:var(--card); 
 
 <div class="sheet" id="sheetExport">
   <div class="sheethead"><h2>AIに渡す</h2><button class="btn ghost" data-close>閉じる</button></div>
+  <h3>誰の記録を渡しますか</h3>
+  <select id="expPerson"></select>
   <div class="grid2">
     <div>初めの日<input type="date" id="expFrom"></div>
     <div>終わりの日<input type="date" id="expTo"></div>
   </div>
-  <h3>何を聞きますか</h3>
+  <h3>何のために渡しますか</h3>
   <select id="expPurposeSel"></select>
   <div class="additem"><button class="addhead" id="purposeAddHead" type="button">聞くことを追加<span class="plus">+</span></button>
   <div class="addbody" id="purposeAddBody" style="display:none">
-    名前<input type="text" id="npLabel" placeholder="例：受診の前に聞く">
-    聞き方<textarea id="npAsk" placeholder="例：受診で医師に伝えることを、記録から抜き出してください"></textarea>
+    名前<input type="text" id="npLabel" placeholder="例：受診の前に渡す">
     渡す記録<div id="npTypes"></div>
     <div class="btnrow"><button class="btn sub" id="npAdd">追加</button></div>
     <div id="npList"></div>
   </div></div>
   <h3>渡す記録</h3>
   <div id="expTypes"></div>
-  <div id="purposeFree" style="display:none">
-  <h3>AIへの依頼</h3>
-  <textarea id="expPurpose" placeholder="例：期間中の記録を日付順に整理してください"></textarea>
-  </div>
   <div class="btnrow"><button class="btn" id="expGen">プロンプトを作る</button></div>
   <div id="expOut" style="display:none">
     <p class="small">登録していない名前や場所は、伏せ字にならないことがあります。内容を確認してからコピーしてください。</p>
@@ -214,17 +195,6 @@ pre.prompt{white-space:pre-wrap; word-break:break-word; background:var(--card); 
   <div id="resSaved"></div>
 </div>
 
-<div class="sheet" id="sheetWord">
-  <div class="sheethead"><h2>言葉の確認</h2><button class="btn ghost" data-close>閉じる</button></div>
-  <p class="small">本人が話した言葉</p>
-  <p id="wordOrig" style="font-size:19px"></p>
-  <p class="small">確認のため、同じ言葉をもう一度入力してください</p>
-  <input type="text" id="wordRetype" placeholder="例：あんたも、ちゃんと寝なさい">
-  <div class="btnrow"><button class="btn sub" id="wordMatch">照合</button></div>
-  <p id="wordResult"></p>
-  <div class="btnrow"><button class="btn" id="wordConfirm" style="display:none">本人の言葉として確認</button></div>
-</div>
-
 <div class="sheet" id="sheetCrisis">
   <div class="crisisbox">
     <p>今は記録を続けなくても大丈夫です。必要なときは、登録した相談先に連絡できます。</p>
@@ -243,14 +213,15 @@ pre.prompt{white-space:pre-wrap; word-break:break-word; background:var(--card); 
 <script>
 const KEY='kurashi-diary-v1';
 const AXES=[['meal','食事',['全部','7割','半分','少し','食べなかった']],['water','水分',['よく飲んだ','ふつう','少なめ']],['toilet','排泄',['あった','なかった']],['sleep','睡眠',['よく眠れた','夜中に起きた','眠れなかった']],['med','薬',['飲めた','飲み忘れ','いやがった']]];
+const EVENT_CHOICES=['通院した','デイサービス','ショートステイ','訪問看護・介護が来た','買い物に行った','家族が来た','電話で話した','外出した'];
+const COST_CATS=['タクシー代','診察代','薬代','日用品','食費','その他'];
 const SELF_AXES=[['sleep','眠れた',['よく眠れた','まあまあ','眠れなかった']],['tired','疲れ',['元気','少し疲れた','疲れた']]];
-const EXP_TYPES=[['A','1日の記録（食事・水分・排泄・睡眠・薬）'],['B','本人の言葉'],['C','出来事'],['D','自分の記録'],['E','費用のメモ']];
+const EXP_TYPES=[['A','1日の記録（食事・水分・排泄・睡眠・薬）'],['B','出来事'],['C','自分の記録'],['D','費用のメモ']];
 const PURPOSES=[
- {label:'本人の言葉を集める',ask:'本人の言葉だけを、原文のまま日付順に並べてください。言い換えや要約はしないでください。',types:['B']},
- {label:'使える支援を聞く',ask:'記録から読み取れる困りごとを挙げて、使える可能性のある支援制度や相談先を教えてください。',types:['A','C']},
- {label:'自分の状態を言葉にする',ask:'書き手自身の記録をもとに、今の状態を言葉にしてください。',types:['D']},
- {label:'言葉にできないことを渡す',ask:'うまく言葉にできないまま相談します。記録を読んで、何に困っているのかを一緒に整理してください。',types:['A','C']},
- {label:'家族で共有する',ask:'期間中の記録を日付順に並べて、家族で見返せる形にしてください。',types:['A','B','C','E']}
+ {label:'支援を探すための整理',types:['A','B']},
+ {label:'自分の状態を言葉にする準備',types:['C']},
+ {label:'言葉にできないことを渡す',types:['A','B']},
+ {label:'家族で記録を共有する',types:['A','B','D']}
 ];
 const FORMAT_INSTRUCTION='本文中の伏せ字（例：［本人01］、［施設01］、［場所01］、［連絡先01］）は識別子です。文字、括弧、番号を一切変更せず、そのまま出力に残してください。別の表現への言い換え、一般名詞への置換、省略、統合、表記揺れへの変更を禁止します。引用・要約・表・箇条書きのどの形式でも、伏せ字は必ず元の表記を維持してください。新しい個人名や施設名を推測して補わないでください。回答は指定された出力形式で返し、伏せ字を含む箇所を削除しないでください。';
 function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
@@ -264,9 +235,10 @@ function seed(){
       {kind:'施設',label:'病院',value:'さくら病院',ph:'［施設01］'},
       {kind:'場所',label:'住所',value:'新潟市西区',ph:'［場所01］'}
     ]},
+    profiles:{p1:{name:'佐藤春子',rel:'母',address:'新潟市西区',hospital:'さくら病院',tel:'',extras:[]}},
     records:{p1:{
-      '2026-11-25':{axes:{meal:'7割',water:'ふつう',toilet:'あった',sleep:'夜中に起きた',med:'飲めた'},words:[{text:'あんたも、ちゃんと寝なさい',status:'confirmed'}],events:'',free:'夜中に目が覚めて、しばらく一緒に起きていた。',self:{sleep:'まあまあ',tired:'少し疲れた'},cost:{amount:'',memo:''}},
-      '2026-11-26':{axes:{meal:'全部',med:'飲めた'},words:[{text:'明日は、病院の日だったね',status:'matched'}],events:'通院した',free:'医師から「薬は今のままで」と言われた。',self:{},cost:{amount:'4800',memo:'タクシー代と診察代'}},
+      '2026-11-25':{axes:{meal:'7割',water:'ふつう',toilet:'あった',sleep:'夜中に起きた',med:'飲めた'},words:[],events:'',free:'夜中に目が覚めて、しばらく一緒に起きていた。',self:{sleep:'まあまあ',tired:'少し疲れた'},cost:{amount:'',memo:''}},
+      '2026-11-26':{axes:{meal:'全部',med:'飲めた'},words:[],events:'通院した',free:'医師から「薬は今のままで」と言われた。',self:{},cost:{amount:'4800',memo:'タクシー代と診察代'}},
       '2026-11-27':{axes:{sleep:'眠れなかった'},words:[],events:'',free:'夜中に何度も呼ばれて、ほとんど眠れなかった。',self:{sleep:'眠れなかった',tired:'疲れた'},cost:{amount:'',memo:''}}
     }},
     contacts:[],
@@ -277,9 +249,10 @@ function seed(){
 let S;
 try{S=JSON.parse(localStorage.getItem(KEY))||seed();}catch(e){S=seed();}
 if(!S.purposes)S.purposes=[];
+if(!S.profiles){S.profiles={};Object.keys(S.pii||{}).forEach(pid=>{const pr={name:'',rel:'',address:'',hospital:'',tel:'',extras:[]};(S.pii[pid]||[]).forEach(r=>{if(r.kind==='本人'&&!pr.name)pr.name=r.value;else if(r.kind==='施設'&&!pr.hospital)pr.hospital=r.value;else if(r.kind==='場所'&&!pr.address)pr.address=r.value;else if(r.kind==='連絡先'&&!pr.tel)pr.tel=r.value;else pr.extras.push({label:r.label,value:r.value});});S.profiles[pid]=pr;});}
+S.persons.forEach(p=>{if(!S.profiles[p.id])S.profiles[p.id]={name:'',rel:'',address:'',hospital:'',tel:'',extras:[]};});
 let curDate=todayStr();
 let curMonth=curDate.slice(0,7);
-let wordTarget=null; // {date, idx}
 function save(){localStorage.setItem(KEY,JSON.stringify(S));const el=document.getElementById('savedLine');if(el){el.textContent='保存済み';setTimeout(()=>{el.textContent='';},1600);}}
 function rec(pid,date){if(!S.records[pid])S.records[pid]={};if(!S.records[pid][date])S.records[pid][date]=blankDay();return S.records[pid][date];}
 function peek(pid,date){return (S.records[pid]||{})[date];}
@@ -315,7 +288,7 @@ box.querySelectorAll('[data-who]').forEach(b=>b.addEventListener('click',()=>{S.
 }
 document.getElementById('whoAdd').addEventListener('click',()=>{
 const v=document.getElementById('whoName').value.trim();if(!v)return;
-const id='p'+Date.now();S.persons.push({id,name:v});S.pii[id]=[];S.records[id]={};S.active=id;save();
+const id='p'+Date.now();S.persons.push({id,name:v});S.records[id]={};if(!S.profiles)S.profiles={};S.profiles[id]={name:'',rel:'',address:'',hospital:'',tel:'',extras:[]};S.active=id;save();
 document.getElementById('whoName').value='';closeSheets();renderAll();
 });
 
@@ -349,40 +322,33 @@ let openAdds={};
 function renderAdds(r){
   const box=document.getElementById('addBox');
   let h='';
-  /* words */
-  let wb='';
-  (r.words||[]).forEach((w,i)=>{
-    const badge=w.status==='confirmed'?'<span class="badge ok">確認済み</span>':(w.status==='matched'?'<span class="badge">照合できた</span>':'<span class="badge">未確認</span>');
-    const btn=w.status!=='confirmed'?' <button class="btn ghost" data-word="'+i+'">確認</button>':'';
-    wb+='<div class="worditem"><span>「'+esc(w.text)+'」</span>'+badge+btn+'</div>';
-  });
-  wb+='<div class="piirow" style="margin-top:8px"><input type="text" id="newWord" placeholder="例：あんたも、ちゃんと寝なさい"><button class="btn sub" id="addWord">追加</button></div>';
-  h+=addItem('本人の言葉',wb,openAdds['本人の言葉']);
   /* events + free */
-  const eb='<textarea id="evText" placeholder="起きたこと">'+esc(r.events)+'</textarea>'
-    +'<p class="small" style="margin:10px 0 4px">自由に書く</p><textarea id="freeText" placeholder="例：夜中に目が覚めて、しばらく一緒に起きていた">'+esc(r.free)+'</textarea>';
+  const evSel=(r.events||'').split('、').filter(Boolean);
+  let eb='<div class="segs" style="flex-wrap:wrap;overflow:visible">';
+  EVENT_CHOICES.forEach(e=>{eb+='<button class="seg'+(evSel.includes(e)?' on':'')+'" data-ev="'+esc(e)+'">'+esc(e)+'</button>';});
+  eb+='</div>';
   h+=addItem('出来事',eb,openAdds['出来事']);
   /* self */
-  h+=addItem('自分の記録','<div id="selfBox"></div>',openAdds['自分の記録']);
+  h+=addItem('自分の記録','<div id="selfBox"></div><div class="btnrow"><button class="btn ghost" id="tiredBtn">今日はしんどい</button></div>',openAdds['自分の記録']);
   /* cost */
-  const cb='<div class="grid2"><div>金額（円）<input type="number" id="costAmt" value="'+esc(r.cost.amount)+'"></div><div>メモ<input type="text" id="costMemo" placeholder="例：タクシー代と診察代" value="'+esc(r.cost.memo)+'"></div></div>';
+  let cb='<div>金額（円）<input type="number" id="costAmt" value="'+esc(r.cost.amount)+'"></div><div class="segs" style="flex-wrap:wrap;overflow:visible;margin-top:8px">';
+  COST_CATS.forEach(c=>{cb+='<button class="seg'+(r.cost.memo===c?' on':'')+'" data-cc="'+esc(c)+'">'+esc(c)+'</button>';});
+  cb+='</div>';
   h+=addItem('費用のメモ',cb,openAdds['費用のメモ']);
   box.innerHTML=h;
   box.querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',()=>{const t=b.dataset.add;openAdds[t]=!openAdds[t];renderAdds(rec(S.active,curDate));}));
-  const aw=document.getElementById('addWord');
-  if(aw)aw.addEventListener('click',()=>{
-    const v=document.getElementById('newWord').value.trim();if(!v)return;
-    r.words.push({text:v.replace(/^「|」$/g,''),status:'new'});save();renderAdds(r);
-  });
-  box.querySelectorAll('[data-word]').forEach(b=>b.addEventListener('click',()=>{wordTarget={date:curDate,idx:+b.dataset.word};openWordSheet();}));
-  const ev=document.getElementById('evText'), fr=document.getElementById('freeText');
-  if(ev)ev.addEventListener('input',()=>{r.events=ev.value;save();crisisCheck(ev.value);});
-  if(fr)fr.addEventListener('input',()=>{r.free=fr.value;save();crisisCheck(fr.value);});
+  box.querySelectorAll('[data-ev]').forEach(b=>b.addEventListener('click',()=>{
+    const v=b.dataset.ev;let arr=(r.events||'').split('、').filter(Boolean);
+    arr=arr.includes(v)?arr.filter(x=>x!==v):arr.concat([v]);
+    r.events=arr.join('、');save();renderAdds(rec(S.active,curDate));
+  }));
   const sb=document.getElementById('selfBox');
   if(sb){SELF_AXES.forEach(([key,label,values])=>{sb.appendChild(segRow(label,values,r.self[key],v=>{r.self[key]=(r.self[key]===v)?undefined:v;if(r.self[key]===undefined)delete r.self[key];save();renderAdds(rec(S.active,curDate));}));});}
-  const ca=document.getElementById('costAmt'), cm=document.getElementById('costMemo');
+  const ca=document.getElementById('costAmt');
   if(ca)ca.addEventListener('input',()=>{r.cost.amount=ca.value;save();});
-  if(cm)cm.addEventListener('input',()=>{r.cost.memo=cm.value;save();});
+  box.querySelectorAll('[data-cc]').forEach(b=>b.addEventListener('click',()=>{r.cost.memo=(r.cost.memo===b.dataset.cc)?'':b.dataset.cc;save();renderAdds(rec(S.active,curDate));}));
+  const tb=document.getElementById('tiredBtn');
+  if(tb)tb.addEventListener('click',()=>{renderCrisis();openSheet('sheetCrisis');});
 }
 document.getElementById('datePick').addEventListener('change',e=>{curDate=e.target.value;curMonth=curDate.slice(0,7);renderToday();});
 
@@ -411,7 +377,6 @@ if(!dates.length){list.innerHTML='<p class="small">この月の記録はあり�
 list.innerHTML=dates.map(d=>{
 const r=recs[d];
 const parts=AXES.filter(([k])=>r.axes[k]).map(([k,l])=>l+'：'+r.axes[k]);
-if(r.words&&r.words.length)parts.push('「'+r.words[0].text+'」');
 return '<button class="dayitem" data-d="'+d+'"><span class="d">'+d.slice(5).replace('-','月')+'日</span><span class="s">'+esc(parts.join('／'))+'</span></button>';
 }).join('');
 list.querySelectorAll('[data-d]').forEach(b=>b.addEventListener('click',()=>showDay(b.dataset.d)));
@@ -421,7 +386,6 @@ const r=peek(S.active,d);if(!r)return;
 const box=document.getElementById('dayDetail');
 let h='<div class="btnrow"><button class="btn ghost" id="dayBack">← 一覧</button></div><h3>'+d+'</h3>';
 AXES.forEach(([k,l])=>{if(r.axes[k])h+='<div class="row"><b>'+l+'</b>'+esc(r.axes[k])+'</div>';});
-if(r.words&&r.words.length){h+='<h3>本人の言葉</h3>'+r.words.map(w=>'<div class="row">「'+esc(w.text)+'」'+(w.status==='confirmed'?'<span class="badge ok">確認済み</span>':'')+'</div>').join('');}
 if(r.events&&r.events.trim())h+='<h3>出来事</h3><div class="row">'+esc(r.events)+'</div>';
 if(r.free&&r.free.trim())h+='<h3>自由に書いたこと</h3><div class="row">'+esc(r.free)+'</div>';
 if(r.self&&Object.keys(r.self).length){h+='<h3>自分の記録</h3>'+SELF_AXES.filter(([k])=>r.self[k]).map(([k,l])=>'<div class="row"><b>'+l+'</b>'+esc(r.self[k])+'</div>').join('');}
@@ -434,61 +398,68 @@ document.getElementById('mNext').addEventListener('click',()=>{const[a,b]=curMon
 
 /* tree */
 function treeStats(){
-const recs=S.records[S.active]||{};let leaves=0,fruits=[];
-Object.keys(recs).forEach(d=>{const r=recs[d];if(hasContent(r))leaves++;(r.words||[]).forEach(w=>{if(w.status==='confirmed')fruits.push({date:d,text:w.text});});});
-return {leaves,fruits};
+const recs=S.records[S.active]||{};let leaves=0;
+Object.keys(recs).forEach(d=>{if(hasContent(recs[d]))leaves++;});
+return {leaves};
 }
 function renderTree(){
-const {leaves,fruits}=treeStats();
+const {leaves}=treeStats();
 document.getElementById('leafCount').textContent=leaves;
-document.getElementById('fruitCount').textContent=fruits.length;
 let svg='<rect x="124" y="150" width="12" height="80" rx="5" fill="#B08D5F"/>';
 const spots=[[80,90],[130,60],[180,90],[60,130],[105,115],[155,115],[200,130],[85,150],[130,140],[175,150],[105,80],[155,80]];
 for(let i=0;i<Math.min(leaves,spots.length);i++){const[x,y]=spots[i];svg+='<circle cx="'+x+'" cy="'+y+'" r="17" fill="#A9C29B" opacity="0.9"/>';}
 if(leaves===0){svg+='<circle cx="105" cy="105" r="16" fill="#D8DFCE"/><circle cx="155" cy="105" r="16" fill="#D8DFCE"/>';}
-fruits.slice(0,8).forEach((f,i)=>{const[x,y]=spots[(i*2+1)%spots.length];svg+='<circle cx="'+(x+8)+'" cy="'+(y+8)+'" r="6" fill="#D98A4B"/>';});
 document.getElementById('treeSvg').innerHTML=svg;
-const fl=document.getElementById('fruitList');
-fl.innerHTML=fruits.length?('<h3>本人の言葉</h3>'+fruits.map(f=>'<div class="worditem"><span class="small">'+f.date+'</span>　「'+esc(f.text)+'」</div>').join('')):'<p class="small">確認済みの言葉はまだありません。</p>';
 }
 
 /* settings */
-function phFor(kind){
-const used=(S.pii[S.active]||[]).filter(p=>p.kind===kind).length;
-return '［'+kind+String(used+1).padStart(2,'0')+'］';
+function personNum(pid){return S.persons.findIndex(p=>p.id===pid)+1;}
+function blankProfile(){return {name:'',rel:'',address:'',hospital:'',tel:'',extras:[]};}
+function getProfile(pid){if(!S.profiles)S.profiles={};if(!S.profiles[pid])S.profiles[pid]=blankProfile();return S.profiles[pid];}
+function profileRows(pid){
+const pr=getProfile(pid),n=String(personNum(pid)).padStart(2,'0'),rows=[];
+if(pr.name)rows.push({label:'名前',value:pr.name,ph:'［本人'+n+'］'});
+if(pr.rel)rows.push({label:'関係',value:pr.rel,ph:'［関係'+n+'］'});
+if(pr.address)rows.push({label:'住所',value:pr.address,ph:'［場所'+n+'］'});
+if(pr.hospital)rows.push({label:'病院',value:pr.hospital,ph:'［施設'+n+'］'});
+if(pr.tel)rows.push({label:'電話番号',value:pr.tel,ph:'［連絡先'+n+'］'});
+(pr.extras||[]).forEach((e,i)=>{if(e.value)rows.push({label:e.label,value:e.value,ph:'［その他'+n+'-'+(i+1)+'］'});});
+return rows;
 }
+function allMaskRows(){let rows=[];S.persons.forEach(p=>{rows=rows.concat(profileRows(p.id));});return rows;}
 function renderSettings(){
 const pl=document.getElementById('personList');
 pl.innerHTML=S.persons.map(p=>'<div class="piirow"><span style="flex:1">'+esc(p.name)+(p.id===S.active?'（表示中）':'')+'</span>'+(p.id!==S.active?'<button class="btn ghost" data-sw="'+p.id+'">切り替え</button>':'')+'</div>').join('');
 pl.querySelectorAll('[data-sw]').forEach(b=>b.addEventListener('click',()=>{S.active=b.dataset.sw;save();renderAll();}));
-const rows=S.pii[S.active]||[];
-document.getElementById('piiList').innerHTML=rows.map((p,i)=>'<div class="piirow"><span style="flex:0 0 64px">'+esc(p.label)+'</span><input type="text" value="'+esc(p.value)+'" data-pii="'+i+'"><span class="ph">'+esc(p.ph)+'</span><button class="btn ghost" data-delpii="'+i+'">消す</button></div>').join('')||'<p class="small">登録はまだありません。</p>';
-document.querySelectorAll('[data-pii]').forEach(inp=>inp.addEventListener('input',()=>{rows[+inp.dataset.pii].value=inp.value;save();}));
-document.querySelectorAll('[data-delpii]').forEach(b=>b.addEventListener('click',()=>{rows.splice(+b.dataset.delpii,1);save();renderSettings();}));
+const pr=getProfile(S.active);
+const actP=S.persons.find(p=>p.id===S.active);
+document.getElementById('profileTitle').textContent='プロフィール（'+(actP?actP.name:'')+'・日記とは別に置きます）';
+const PF=[['name','名前','［本人'],['rel','関係','［関係'],['address','住所','［場所'],['hospital','かかりつけの病院','［施設'],['tel','電話番号','［連絡先']];
+const pnum=String(personNum(S.active)).padStart(2,'0');
+document.getElementById('profileBox').innerHTML=PF.map(([k,l,php])=>'<div class="piirow"><span style="flex:0 0 118px">'+l+'</span><input type="text" data-pf="'+k+'" value="'+esc(pr[k]||'')+'"><span class="ph">'+php+pnum+'］</span></div>').join('')
++(pr.extras||[]).map((e,i)=>'<div class="piirow"><span style="flex:0 0 118px">'+esc(e.label)+'</span><input type="text" data-ex="'+i+'" value="'+esc(e.value)+'"><span class="ph">［その他'+pnum+'-'+(i+1)+'］</span><button class="btn ghost" data-delex="'+i+'">消す</button></div>').join('');
+document.querySelectorAll('[data-pf]').forEach(inp=>inp.addEventListener('input',()=>{pr[inp.dataset.pf]=inp.value;save();}));
+document.querySelectorAll('[data-ex]').forEach(inp=>inp.addEventListener('input',()=>{pr.extras[+inp.dataset.ex].value=inp.value;save();}));
+document.querySelectorAll('[data-delex]').forEach(b=>b.addEventListener('click',()=>{pr.extras.splice(+b.dataset.delex,1);save();renderSettings();}));
 const cl=document.getElementById('contactList');
 cl.innerHTML=S.contacts.map((c,i)=>'<div class="piirow"><span style="flex:1">'+esc(c.name)+'　'+esc(c.tel)+(c.hours?'（'+esc(c.hours)+'）':'')+'</span><button class="btn ghost" data-delc="'+i+'">消す</button></div>').join('')||'<p class="small">登録はまだありません。</p>';
 cl.querySelectorAll('[data-delc]').forEach(b=>b.addEventListener('click',()=>{S.contacts.splice(+b.dataset.delc,1);save();renderSettings();}));
-document.getElementById('crisisWords').value=S.crisis.join('\n');
 }
 document.getElementById('addPerson').addEventListener('click',()=>{
 const v=document.getElementById('newPersonName').value.trim();if(!v)return;
-const id='p'+Date.now();S.persons.push({id,name:v});S.pii[id]=[];S.records[id]={};S.active=id;save();renderAll();
+const id='p'+Date.now();S.persons.push({id,name:v});S.records[id]={};if(!S.profiles)S.profiles={};S.profiles[id]={name:'',rel:'',address:'',hospital:'',tel:'',extras:[]};S.active=id;save();renderAll();
 });
-document.getElementById('addPii').addEventListener('click',()=>{
-const kind=document.getElementById('piiKind').value,label=document.getElementById('piiLabel').value.trim(),value=document.getElementById('piiValue').value.trim();
+document.getElementById('addExtra').addEventListener('click',()=>{
+const label=document.getElementById('exLabel').value.trim(),value=document.getElementById('exValue').value.trim();
 if(!label||!value)return;
-if(!S.pii[S.active])S.pii[S.active]=[];
-S.pii[S.active].push({kind,label,value,ph:phFor(kind)});save();renderSettings();
-document.getElementById('piiLabel').value='';document.getElementById('piiValue').value='';
+getProfile(S.active).extras.push({label,value});save();renderSettings();
+document.getElementById('exLabel').value='';document.getElementById('exValue').value='';
 });
 document.getElementById('addContact').addEventListener('click',()=>{
 const name=document.getElementById('cName').value.trim(),tel=document.getElementById('cTel').value.trim(),hours=document.getElementById('cHours').value.trim();
 if(!name||!tel)return;
 S.contacts.push({name,tel,hours});save();renderSettings();
 document.getElementById('cName').value='';document.getElementById('cTel').value='';document.getElementById('cHours').value='';
-});
-document.getElementById('saveCrisis').addEventListener('click',()=>{
-S.crisis=document.getElementById('crisisWords').value.split('\n').map(s=>s.trim()).filter(Boolean);save();
 });
 document.getElementById('btnDl').addEventListener('click',()=>{
 const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
@@ -499,23 +470,24 @@ const f=e.target.files[0];if(!f)return;
 const rd=new FileReader();rd.onload=()=>{try{S=JSON.parse(rd.result);save();renderAll();}catch(err){alert('読み込めませんでした');}};rd.readAsText(f);
 });
 document.getElementById('btnDelAll').addEventListener('click',()=>{
-if(confirm('記録・個人情報・設定をすべて消します。よろしいですか？')){S=seed();S.persons=[];S.records={};S.pii={};S.restored=[];localStorage.setItem(KEY,JSON.stringify(S));location.reload();}
+if(confirm('記録・個人情報・設定をすべて消します。よろしいですか？')){S=seed();S.persons=[];S.records={};S.pii={};S.profiles={};S.restored=[];localStorage.setItem(KEY,JSON.stringify(S));location.reload();}
 });
 
 /* masking */
-function maskText(text,pid){
+function maskAll(text){
 let out=String(text||'');
-const rows=(S.pii[pid]||[]).slice().sort((a,b)=>b.value.length-a.value.length);
+const rows=allMaskRows().slice().sort((a,b)=>b.value.length-a.value.length);
 rows.forEach(p=>{if(p.value)out=out.split(p.value).join(p.ph);});
 return out;
 }
 function personPh(pid){
-const row=(S.pii[pid]||[]).find(p=>p.kind==='本人');
-return row?row.ph:'［本人01］';
+return '［本人'+String(personNum(pid)).padStart(2,'0')+'］';
 }
 
 /* export sheet */
 document.getElementById('btnExport').addEventListener('click',()=>{
+document.getElementById('expPerson').innerHTML=S.persons.map(p=>'<option value="'+p.id+'">'+esc(p.name)+'</option>').join('')+(S.persons.length>1?'<option value="all">全員</option>':'');
+document.getElementById('expPerson').value=S.active;
 const dates=Object.keys(S.records[S.active]||{}).filter(d=>hasContent(S.records[S.active][d])).sort();
 document.getElementById('expFrom').value=dates[0]||todayStr();
 document.getElementById('expTo').value=dates[dates.length-1]||todayStr();
@@ -527,27 +499,27 @@ openSheet('sheetExport');
 document.getElementById('expGen').addEventListener('click',()=>{
 const from=document.getElementById('expFrom').value,to=document.getElementById('expTo').value;
 const types=[...document.querySelectorAll('[data-et]')].filter(c=>c.checked).map(c=>c.dataset.et);
-const selV=document.getElementById('expPurposeSel').value;
-const purpose=(selV!=='free'&&allPurposes()[+selV])?allPurposes()[+selV].ask:document.getElementById('expPurpose').value.trim();
-const pid=S.active, recs=S.records[pid]||{};
-const dates=Object.keys(recs).filter(d=>d>=from&&d<=to&&hasContent(recs[d])).sort();
+const target=document.getElementById('expPerson').value;
+const pids=target==='all'?S.persons.map(p=>p.id):[target];
 let lines=[];
-lines.push('依頼：'+(purpose||'期間中の記録を日付順に整理してください'));
 lines.push('対象期間：'+from+'〜'+to);
-lines.push('対象者：'+personPh(pid));
+pids.forEach(pid=>{
+const recs=S.records[pid]||{};
+const dates=Object.keys(recs).filter(d=>d>=from&&d<=to&&hasContent(recs[d])).sort();
 lines.push('');
+lines.push('対象者：'+personPh(pid));
 dates.forEach(d=>{
 const r=recs[d];lines.push('■ '+d);
 if(types.includes('A')){const p=AXES.filter(([k])=>r.axes[k]).map(([k,l])=>l+'：'+r.axes[k]);if(p.length)lines.push('記録：'+p.join('／'));}
-if(types.includes('B')&&(r.words||[]).length)lines.push('本人の言葉：'+r.words.map(w=>'「'+w.text+'」').join(' '));
-if(types.includes('C')){if(r.events&&r.events.trim())lines.push('出来事：'+r.events.trim());if(r.free&&r.free.trim())lines.push('自由記述：'+r.free.trim());}
-if(types.includes('D')&&r.self&&Object.keys(r.self).length)lines.push('自分の記録：'+SELF_AXES.filter(([k])=>r.self[k]).map(([k,l])=>l+'：'+r.self[k]).join('／'));
-if(types.includes('E')&&r.cost&&(r.cost.amount||r.cost.memo))lines.push('費用：'+(r.cost.amount?Number(r.cost.amount).toLocaleString()+'円':'')+(r.cost.memo?' '+r.cost.memo:''));
+if(types.includes('B')){if(r.events&&r.events.trim())lines.push('出来事：'+r.events.trim());if(r.free&&r.free.trim())lines.push('自由記述：'+r.free.trim());}
+if(types.includes('C')&&r.self&&Object.keys(r.self).length)lines.push('自分の記録：'+SELF_AXES.filter(([k])=>r.self[k]).map(([k,l])=>l+'：'+r.self[k]).join('／'));
+if(types.includes('D')&&r.cost&&(r.cost.amount||r.cost.memo))lines.push('費用：'+(r.cost.amount?Number(r.cost.amount).toLocaleString()+'円':'')+(r.cost.memo?' '+r.cost.memo:''));
 lines.push('');
+});
 });
 lines.push('出力形式の指示：');
 lines.push(FORMAT_INSTRUCTION);
-const masked=maskText(lines.join('\n'),pid);
+const masked=maskAll(lines.join('\n'));
 document.getElementById('expPre').textContent=masked;
 document.getElementById('expOut').style.display='block';
 });
@@ -562,14 +534,13 @@ function allPurposes(){return PURPOSES.concat(S.purposes||[]);}
 function renderPurposeSel(){
 const sel=document.getElementById('expPurposeSel');
 const cur=sel.value;
-sel.innerHTML=allPurposes().map((p,i)=>'<option value="'+i+'">'+esc(p.label)+'</option>').join('')+'<option value="free">自分で書く</option>';
+sel.innerHTML=allPurposes().map((p,i)=>'<option value="'+i+'">'+esc(p.label)+'</option>').join('')+'<option value="free">自分で選ぶ</option>';
 if(cur)sel.value=cur;
 applyPurposeSel();
 renderNpList();
 }
 function applyPurposeSel(){
 const v=document.getElementById('expPurposeSel').value;
-document.getElementById('purposeFree').style.display=(v==='free')?'block':'none';
 if(v!=='free'){const p=allPurposes()[+v];if(p)document.querySelectorAll('[data-et]').forEach(c=>{c.checked=p.types.includes(c.dataset.et);});}
 }
 document.getElementById('expPurposeSel').addEventListener('change',applyPurposeSel);
@@ -581,12 +552,12 @@ box.innerHTML=(S.purposes||[]).map((p,i)=>'<div class="piirow"><span style="flex
 box.querySelectorAll('[data-delnp]').forEach(b=>b.addEventListener('click',()=>{S.purposes.splice(+b.dataset.delnp,1);save();renderPurposeSel();}));
 }
 document.getElementById('npAdd').addEventListener('click',()=>{
-const label=document.getElementById('npLabel').value.trim(),ask=document.getElementById('npAsk').value.trim();
+const label=document.getElementById('npLabel').value.trim();
 const types=[...document.querySelectorAll('[data-nt]')].filter(c=>c.checked).map(c=>c.dataset.nt);
-if(!label||!ask||!types.length)return;
+if(!label||!types.length)return;
 if(!S.purposes)S.purposes=[];
-S.purposes.push({label,ask,types});save();
-document.getElementById('npLabel').value='';document.getElementById('npAsk').value='';
+S.purposes.push({label,types});save();
+document.getElementById('npLabel').value='';
 renderPurposeSel();
 document.getElementById('expPurposeSel').value=String(allPurposes().length-1);applyPurposeSel();
 });
@@ -597,14 +568,14 @@ document.getElementById('btnRestore').addEventListener('click',()=>{renderRestor
 document.getElementById('resCheck').addEventListener('click',()=>{
 const t=document.getElementById('resIn').value;
 const found=[...new Set((t.match(/［[^］]+］/g)||[]))];
-const map={};(S.pii[S.active]||[]).forEach(p=>map[p.ph]=p.value);
+const map={};allMaskRows().forEach(p=>{if(!(p.ph in map))map[p.ph]=p.value;});
 resFound=found;
 document.getElementById('resList').innerHTML=found.length?found.map(ph=>'<div class="checkrow">'+esc(ph)+'　'+(map[ph]?'→ '+esc(map[ph]):'対応する情報なし')+'</div>').join(''):'<p class="small">伏せ字は見つかりませんでした。</p>';
 document.getElementById('resDo').style.display=found.length?'inline-block':'none';
 });
 document.getElementById('resDo').addEventListener('click',()=>{
 let t=document.getElementById('resIn').value;
-const map={};(S.pii[S.active]||[]).forEach(p=>map[p.ph]=p.value);
+const map={};allMaskRows().forEach(p=>{if(!(p.ph in map))map[p.ph]=p.value;});
 Object.keys(map).forEach(ph=>{t=t.split(ph).join(map[ph]);});
 const pre=document.getElementById('resPre');pre.textContent=t;pre.style.display='block';
 document.getElementById('resSave').style.display='inline-block';
@@ -619,35 +590,6 @@ function renderRestored(){
 const box=document.getElementById('resSaved');
 box.innerHTML=S.restored.length?S.restored.slice().reverse().map(r=>'<div class="worditem"><span class="small">'+esc(r.date)+'</span><pre class="prompt" style="max-height:20vh">'+esc(r.text)+'</pre></div>').join(''):'<p class="small">まだありません。</p>';
 }
-
-/* word sheet */
-function openWordSheet(){
-const r=peek(S.active,wordTarget.date);if(!r)return;
-const w=r.words[wordTarget.idx];if(!w)return;
-document.getElementById('wordOrig').textContent='「'+w.text+'」';
-document.getElementById('wordRetype').value='';
-document.getElementById('wordResult').textContent='';
-document.getElementById('wordConfirm').style.display='none';
-openSheet('sheetWord');
-}
-document.getElementById('wordMatch').addEventListener('click',()=>{
-const r=peek(S.active,wordTarget.date);const w=r.words[wordTarget.idx];
-const v=document.getElementById('wordRetype').value;
-const res=document.getElementById('wordResult');
-if(v===w.text){
-if(w.status==='new'){w.status='matched';save();}
-res.textContent='一致しています。';
-document.getElementById('wordConfirm').style.display='inline-block';
-}else{
-let i=0;while(i<Math.min(v.length,w.text.length)&&v[i]===w.text[i])i++;
-res.innerHTML='一致していません。<br>違っているところ：<span class="diffmark" style="color:var(--warn);font-weight:700">'+(i+1)+'文字目</span>（元の言葉は「'+esc(w.text[i]||'（終わり）')+'」、入力は「'+esc(v[i]||'（終わり）')+'」）';
-document.getElementById('wordConfirm').style.display='none';
-}
-});
-document.getElementById('wordConfirm').addEventListener('click',()=>{
-const r=peek(S.active,wordTarget.date);r.words[wordTarget.idx].status='confirmed';save();
-closeSheets();renderToday();
-});
 
 function renderAll(){renderToday();}
 renderAll();
