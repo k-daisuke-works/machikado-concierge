@@ -170,6 +170,8 @@ pre.prompt{white-space:pre-wrap; word-break:break-word; background:var(--card); 
     <div>初めの日<input type="date" id="expFrom"></div>
     <div>終わりの日<input type="date" id="expTo"></div>
   </div>
+  <h3>何を聞きますか</h3>
+  <div id="expPurposes"></div>
   <h3>渡す記録</h3>
   <div id="expTypes"></div>
   <h3>AIへの依頼</h3>
@@ -226,6 +228,13 @@ const KEY='kurashi-diary-v1';
 const AXES=[['meal','食事',['全部','7割','半分','少し','食べなかった']],['water','水分',['よく飲んだ','ふつう','少なめ']],['toilet','排泄',['あった','なかった']],['sleep','睡眠',['よく眠れた','夜中に起きた','眠れなかった']],['med','薬',['飲めた','飲み忘れ','いやがった']]];
 const SELF_AXES=[['sleep','眠れた',['よく眠れた','まあまあ','眠れなかった']],['tired','疲れ',['元気','少し疲れた','疲れた']]];
 const EXP_TYPES=[['A','1日の記録（食事・水分・排泄・睡眠・薬）'],['B','本人の言葉'],['C','出来事'],['D','自分の記録'],['E','費用のメモ']];
+const PURPOSES=[
+ {label:'本人の言葉を集める',ask:'本人の言葉だけを、原文のまま日付順に並べてください。言い換えや要約はしないでください。',types:['B']},
+ {label:'使える支援を聞く',ask:'記録から読み取れる困りごとを挙げて、使える可能性のある支援制度や相談先を教えてください。',types:['A','C']},
+ {label:'自分の状態を言葉にする',ask:'書き手自身の記録をもとに、今の状態を言葉にしてください。',types:['D']},
+ {label:'言葉にできないことを渡す',ask:'うまく言葉にできないまま相談します。記録を読んで、何に困っているのかを一緒に整理してください。',types:['A','C']},
+ {label:'家族で共有する',ask:'期間中の記録を日付順に並べて、家族で見返せる形にしてください。',types:['A','B','C','E']}
+];
 const FORMAT_INSTRUCTION='本文中の伏せ字（例：［本人01］、［施設01］、［場所01］、［連絡先01］）は識別子です。文字、括弧、番号を一切変更せず、そのまま出力に残してください。別の表現への言い換え、一般名詞への置換、省略、統合、表記揺れへの変更を禁止します。引用・要約・表・箇条書きのどの形式でも、伏せ字は必ず元の表記を維持してください。新しい個人名や施設名を推測して補わないでください。回答は指定された出力形式で返し、伏せ字を含む箇所を削除しないでください。';
 function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function blankDay(){return {axes:{},words:[],events:'',free:'',self:{},cost:{amount:'',memo:''}};}
@@ -482,6 +491,15 @@ const dates=Object.keys(S.records[S.active]||{}).filter(d=>hasContent(S.records[
 document.getElementById('expFrom').value=dates[0]||todayStr();
 document.getElementById('expTo').value=dates[dates.length-1]||todayStr();
 document.getElementById('expTypes').innerHTML=EXP_TYPES.map(([k,l])=>'<label class="checkrow"><input type="checkbox" data-et="'+k+'" checked>'+l+'</label>').join('');
+const pp=document.getElementById('expPurposes');
+pp.innerHTML=PURPOSES.map((p,i)=>'<label class="checkrow"><input type="radio" name="purpose" data-pi="'+i+'">'+p.label+'</label>').join('')+'<label class="checkrow"><input type="radio" name="purpose" data-pi="-1">自分で書く</label>';
+pp.querySelectorAll('[data-pi]').forEach(r=>r.addEventListener('change',()=>{
+const p=PURPOSES[+r.dataset.pi];
+if(p){
+document.getElementById('expPurpose').value=p.ask;
+document.querySelectorAll('[data-et]').forEach(c=>{c.checked=p.types.includes(c.dataset.et);});
+}
+}));
 document.getElementById('expOut').style.display='none';
 openSheet('sheetExport');
 });
