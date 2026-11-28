@@ -492,9 +492,9 @@ const purpose=document.getElementById('expPurpose').value.trim();
 const pid=S.active, recs=S.records[pid]||{};
 const dates=Object.keys(recs).filter(d=>d>=from&&d<=to&&hasContent(recs[d])).sort();
 let lines=[];
-lines.push(''+(purpose||'期間中の記録を日付順に整理してください'));
-lines.push(''+from+'〜'+to);
-lines.push(''+personPh(pid));
+lines.push('依頼：'+(purpose||'期間中の記録を日付順に整理してください'));
+lines.push('対象期間：'+from+'〜'+to);
+lines.push('対象者：'+personPh(pid));
 lines.push('');
 dates.forEach(d=>{
 const r=recs[d];lines.push('■ '+d);
@@ -505,7 +505,7 @@ if(types.includes('D')&&r.self&&Object.keys(r.self).length)lines.push('自分の
 if(types.includes('E')&&r.cost&&(r.cost.amount||r.cost.memo))lines.push('費用：'+(r.cost.amount?Number(r.cost.amount).toLocaleString()+'円':'')+(r.cost.memo?' '+r.cost.memo:''));
 lines.push('');
 });
-lines.push('');
+lines.push('出力形式の指示：');
 lines.push(FORMAT_INSTRUCTION);
 const masked=maskText(lines.join('\n'),pid);
 document.getElementById('expPre').textContent=masked;
